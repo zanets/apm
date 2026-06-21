@@ -1,6 +1,6 @@
 use super::Package;
 use crate::config::{amp_dir, Agent};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 pub struct Tool {
     pub agent: Agent,
@@ -35,7 +35,7 @@ impl Package for Tool {
         if !repo.exists() {
             anyhow::bail!("'{name}' not in store — run `amp tool add` first");
         }
-        symlink(name, &repo, &self.link_dir())
+        super::symlink(name, &repo, &self.link_dir())
     }
 
     fn is_installed(&self, name: &str) -> bool {
@@ -52,26 +52,4 @@ impl Package for Tool {
         }
         Ok(())
     }
-}
-
-fn symlink(name: &str, repo: &Path, link_dir: &Path) -> anyhow::Result<()> {
-    let link_path = link_dir.join(name);
-    std::fs::create_dir_all(link_dir)?;
-
-    if link_path.is_symlink() {
-        if std::fs::read_link(&link_path)? == repo {
-            println!("  {name}: already linked");
-            return Ok(());
-        }
-        std::fs::remove_file(&link_path)?;
-    } else if link_path.exists() {
-        anyhow::bail!(
-            "{} exists and is not a symlink — remove it manually first",
-            link_path.display()
-        );
-    }
-
-    std::os::unix::fs::symlink(repo, &link_path)?;
-    println!("  linked {name} → {}", link_path.display());
-    Ok(())
 }
