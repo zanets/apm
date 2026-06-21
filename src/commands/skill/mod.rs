@@ -24,11 +24,17 @@ pub enum SkillCommands {
     Enable {
         /// Enable only this skill (omit to enable all)
         name: Option<String>,
+        /// Target agent (default: from ~/.amp/config.toml)
+        #[arg(long, value_enum)]
+        agent: Option<crate::config::Agent>,
     },
     /// Remove symlink from agent, keep store intact (make inactive)
     Disable {
         /// Disable only this skill (omit to disable all)
         name: Option<String>,
+        /// Target agent (default: from ~/.amp/config.toml)
+        #[arg(long, value_enum)]
+        agent: Option<crate::config::Agent>,
     },
     /// Remove from store and packages.toml (disables first)
     Remove {
@@ -47,8 +53,8 @@ pub enum SkillCommands {
 pub fn run(cmd: SkillCommands) -> anyhow::Result<()> {
     match cmd {
         SkillCommands::Add { source, ref_, name } => add::run(source, ref_, name),
-        SkillCommands::Enable { name } => enable::run(name),
-        SkillCommands::Disable { name } => disable::run(name),
+        SkillCommands::Enable { name, agent } => enable::run(name, agent),
+        SkillCommands::Disable { name, agent } => disable::run(name, agent),
         SkillCommands::Remove { name } => remove::run(name),
         SkillCommands::Update { name } => update::run(name),
         SkillCommands::List => list::run(),

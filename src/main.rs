@@ -5,6 +5,7 @@ mod lockfile;
 mod package;
 
 use clap::{Parser, Subcommand};
+use commands::mcp::McpCommands;
 use commands::skill::SkillCommands;
 use commands::tool::ToolCommands;
 
@@ -27,7 +28,11 @@ enum Commands {
         #[command(subcommand)]
         command: ToolCommands,
     },
-    // Mcp { #[command(subcommand)] command: McpCommands } // 未來加
+    /// Manage MCP servers
+    Mcp {
+        #[command(subcommand)]
+        command: McpCommands,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -35,5 +40,6 @@ fn main() -> anyhow::Result<()> {
     match cli.command {
         Commands::Skill { command } => commands::skill::run(command),
         Commands::Tool { command } => commands::tool::run(command),
+        Commands::Mcp { command } => commands::mcp::run(command),
     }
 }

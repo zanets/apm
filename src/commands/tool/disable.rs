@@ -1,10 +1,11 @@
 use crate::{
-    config::{Agent, Packages},
+    config::{Agent, Config, Packages},
     package::{tool::Tool, Package},
 };
 
-pub fn run(name: Option<String>) -> anyhow::Result<()> {
+pub fn run(name: Option<String>, agent: Option<Agent>) -> anyhow::Result<()> {
     let packages = Packages::load()?;
+    let agent = agent.unwrap_or_else(|| Config::load().unwrap_or_default().default_agent);
 
     let targets: Vec<String> = match name {
         Some(n) => {
@@ -16,7 +17,7 @@ pub fn run(name: Option<String>) -> anyhow::Result<()> {
         None => packages.tools.keys().cloned().collect(),
     };
 
-    let tool = Tool::new(Agent::Claude);
+    let tool = Tool::new(agent);
     for name in targets {
         tool.uninstall(&name)?;
     }

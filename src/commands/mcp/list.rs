@@ -1,15 +1,15 @@
 use crate::{
     config::{Agent, Packages},
     lockfile::Lockfile,
-    package::{skill::Skill, Package},
+    package::mcp::Mcp,
 };
 
 pub fn run() -> anyhow::Result<()> {
     let packages = Packages::load()?;
     let lock = Lockfile::load()?;
 
-    if packages.skills.is_empty() {
-        println!("No skills in packages.toml. Add one with: amp skill add github:user/repo");
+    if packages.mcps.is_empty() {
+        println!("No MCP servers in packages.toml. Add one with: amp mcp add github:user/repo");
         return Ok(());
     }
 
@@ -24,21 +24,21 @@ pub fn run() -> anyhow::Result<()> {
     println!("{:<20} {:<38} {:<10} {:<10} {}", "NAME", "SOURCE", "REF", "COMMIT", agent_header);
     println!("{}", "─".repeat(82 + agents.len() * (agent_col_width + 1)));
 
-    let mut names: Vec<&String> = packages.skills.keys().collect();
+    let mut names: Vec<&String> = packages.mcps.keys().collect();
     names.sort();
 
     for name in names {
-        let entry = &packages.skills[name];
-        let store_ref = Skill::new(agents[0]);
+        let entry = &packages.mcps[name];
+        let store_ref = Mcp::new(agents[0]);
         let in_store = store_ref.store_path(name).exists();
-        let commit = lock.skills.get(name).map(|l| l.commit.as_str()).unwrap_or("—");
+        let commit = lock.mcps.get(name).map(|l| l.commit.as_str()).unwrap_or("—");
 
         let agent_cols: String = agents
             .iter()
             .map(|&a| {
                 let status = if !in_store {
                     "not in store"
-                } else if Skill::new(a).is_installed(name) {
+                } else if Mcp::new(a).is_enabled(name) {
                     "enabled"
                 } else {
                     "disabled"

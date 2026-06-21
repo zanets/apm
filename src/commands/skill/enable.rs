@@ -1,10 +1,11 @@
 use crate::{
-    config::{Agent, Packages},
+    config::{Agent, Config, Packages},
     package::{skill::Skill, Package},
 };
 
-pub fn run(name: Option<String>) -> anyhow::Result<()> {
+pub fn run(name: Option<String>, agent: Option<Agent>) -> anyhow::Result<()> {
     let packages = Packages::load()?;
+    let agent = agent.unwrap_or_else(|| Config::load().unwrap_or_default().default_agent);
 
     let targets: Vec<String> = match name {
         Some(n) => {
@@ -16,7 +17,7 @@ pub fn run(name: Option<String>) -> anyhow::Result<()> {
         None => packages.skills.keys().cloned().collect(),
     };
 
-    let skill = Skill::new(Agent::Claude);
+    let skill = Skill::new(agent);
     for name in targets {
         skill.install(&name)?;
     }

@@ -20,15 +20,21 @@ pub enum ToolCommands {
         #[arg(long)]
         name: Option<String>,
     },
-    /// Link tools into agent directories (status: enabled)
+    /// Link tools into agent directories (make active)
     Enable {
         /// Enable only this tool (omit to enable all)
         name: Option<String>,
+        /// Target agent (default: from ~/.amp/config.toml)
+        #[arg(long, value_enum)]
+        agent: Option<crate::config::Agent>,
     },
-    /// Remove symlink from agent, keep store intact (status: disabled)
+    /// Remove symlink from agent, keep store intact (make inactive)
     Disable {
         /// Disable only this tool (omit to disable all)
         name: Option<String>,
+        /// Target agent (default: from ~/.amp/config.toml)
+        #[arg(long, value_enum)]
+        agent: Option<crate::config::Agent>,
     },
     /// Remove from store and packages.toml (disables first)
     Remove {
@@ -47,8 +53,8 @@ pub enum ToolCommands {
 pub fn run(cmd: ToolCommands) -> anyhow::Result<()> {
     match cmd {
         ToolCommands::Add { source, ref_, name } => add::run(source, ref_, name),
-        ToolCommands::Enable { name } => enable::run(name),
-        ToolCommands::Disable { name } => disable::run(name),
+        ToolCommands::Enable { name, agent } => enable::run(name, agent),
+        ToolCommands::Disable { name, agent } => disable::run(name, agent),
         ToolCommands::Remove { name } => remove::run(name),
         ToolCommands::Update { name } => update::run(name),
         ToolCommands::List => list::run(),

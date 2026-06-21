@@ -19,6 +19,8 @@ impl Tool {
         let home = dirs::home_dir().expect("no home dir");
         match self.agent {
             Agent::Claude => home.join(".claude").join("tools"),
+            Agent::Cursor => home.join(".cursor").join("tools"),
+            Agent::Windsurf => home.join(".windsurf").join("tools"),
         }
     }
 }
