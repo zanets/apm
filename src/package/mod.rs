@@ -35,7 +35,10 @@ pub(crate) fn symlink(name: &str, repo: &Path, link_dir: &Path) -> anyhow::Resul
         );
     }
 
+    #[cfg(unix)]
     std::os::unix::fs::symlink(repo, &link_path)?;
+    #[cfg(windows)]
+    std::os::windows::fs::symlink_dir(repo, &link_path)?;
     println!("  linked {name} → {}", link_path.display());
     Ok(())
 }
