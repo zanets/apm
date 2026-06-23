@@ -1,5 +1,5 @@
 use super::Package;
-use crate::config::{amp_dir, Agent};
+use crate::config::{data_dir, Agent};
 use std::path::PathBuf;
 
 pub struct Skill {
@@ -12,7 +12,7 @@ impl Skill {
     }
 
     pub fn store_base() -> PathBuf {
-        amp_dir().join("store").join("skills")
+        data_dir().join("store").join("skills")
     }
 
     fn link_dir(&self) -> PathBuf {

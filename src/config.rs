@@ -98,7 +98,7 @@ impl Default for Config {
 
 impl Config {
     pub fn load() -> anyhow::Result<Self> {
-        let path = amp_dir().join("config.toml");
+        let path = config_dir().join("config.toml");
         if !path.exists() {
             return Ok(Self::default());
         }
@@ -108,17 +108,28 @@ impl Config {
     }
 }
 
-/// ~/.apm/ — apm 的根目錄
-pub fn amp_dir() -> PathBuf {
-    dirs::home_dir().expect("no home dir").join(".apm")
+/// $XDG_CONFIG_HOME/apm — packages.toml, packages.lock, config.toml
+pub fn config_dir() -> PathBuf {
+    std::env::var_os("XDG_CONFIG_HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| dirs::home_dir().expect("no home dir").join(".config"))
+        .join("apm")
+}
+
+/// $XDG_DATA_HOME/apm — git clones (store/)
+pub fn data_dir() -> PathBuf {
+    std::env::var_os("XDG_DATA_HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| dirs::home_dir().expect("no home dir").join(".local/share"))
+        .join("apm")
 }
 
 pub fn packages_path() -> PathBuf {
-    amp_dir().join("packages.toml")
+    config_dir().join("packages.toml")
 }
 
 pub fn lockfile_path() -> PathBuf {
-    amp_dir().join("packages.lock")
+    config_dir().join("packages.lock")
 }
 
 #[cfg(test)]

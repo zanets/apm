@@ -7,20 +7,15 @@
 ## Directory Layout
 
 ```
-~/.apm/
-├── packages.toml       # declared packages (source of truth)
-├── packages.lock       # pinned commits + timestapms
-└── store/
-    ├── skills/
-    │   └── <name>/     # git clone of the skill repo
-    └── tools/
-        └── <name>/     # git clone of the tool repo
+~/.config/apm/                                        # $XDG_CONFIG_HOME/apm
+├── packages.toml                                     # declared packages (source of truth)
+├── packages.lock                                     # pinned commits + timestamps
+└── config.toml                                       # default agent, etc.
 
-~/.claude/
-├── skills/
-│   └── <name> -> ~/.apm/store/skills/<name>   # symlink
-└── tools/
-    └── <name> -> ~/.apm/store/tools/<name>    # symlink
+~/.local/share/apm/store/skills/<name>/               # $XDG_DATA_HOME/apm
+
+~/.claude/skills/
+└── <name> -> ~/.local/share/apm/store/skills/<name>  # symlink
 ```
 
 ## Module Map

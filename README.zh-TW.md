@@ -22,14 +22,15 @@ cargo install --path .
 套件是安裝到 `~/.claude/skills/` 的斜線指令（`.md` 檔）。apm 從 GitHub clone 到本地 store，再以 symlink 連結到 agent 目錄。
 
 ```
-~/.apm/
-├── packages.toml       # 宣告的套件清單
-├── packages.lock       # 鎖定的 commit 版本
-└── store/
-    └── skills/<name>/
+~/.config/apm/                     # $XDG_CONFIG_HOME/apm
+├── packages.toml                  # 宣告的套件清單
+└── packages.lock                  # 鎖定的 commit 版本
 
-~/.claude/
-└── skills/<name> -> ~/.apm/store/skills/<name>
+~/.local/share/apm/store/skills/   # $XDG_DATA_HOME/apm
+└── <name>/
+
+~/.claude/skills/
+└── <name> -> ~/.local/share/apm/store/skills/<name>
 ```
 
 ## 指令
@@ -70,6 +71,6 @@ MCP 管理委派給 `claude` CLI���`claude mcp add/remove`）。
 
 | 路徑 | 用途 |
 |------|------|
-| `~/.apm/packages.toml` | 宣告的套件清單，唯一事實來源 |
-| `~/.apm/packages.lock` | 鎖定的 commit hash 與時間戳記 |
-| `~/.apm/store/` | Git clone 存放目錄 |
+| `~/.config/apm/packages.toml` | 宣告的套件清單，唯一事實來源 |
+| `~/.config/apm/packages.lock` | 鎖定的 commit hash 與時間戳記 |
+| `~/.local/share/apm/store/` | Git clone 存放目錄 |

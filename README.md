@@ -22,14 +22,15 @@ cargo install --path .
 Packages are slash commands (`.md` files) installed into `~/.claude/skills/`. apm clones them from GitHub into a local store and symlinks them into agent directories.
 
 ```
-~/.apm/
-├── packages.toml       # declared packages
-├── packages.lock       # pinned commits
-└── store/
-    └── skills/<name>/
+~/.config/apm/                     # $XDG_CONFIG_HOME/apm
+├── packages.toml                  # declared packages
+└── packages.lock                  # pinned commits
 
-~/.claude/
-└── skills/<name> -> ~/.apm/store/skills/<name>
+~/.local/share/apm/store/skills/   # $XDG_DATA_HOME/apm
+└── <name>/
+
+~/.claude/skills/
+└── <name> -> ~/.local/share/apm/store/skills/<name>
 ```
 
 ## Commands
@@ -70,6 +71,6 @@ MCP management delegates to the `claude` CLI (`claude mcp add/remove`).
 
 | Path | Purpose |
 |------|---------|
-| `~/.apm/packages.toml` | Declared packages — source of truth |
-| `~/.apm/packages.lock` | Pinned commit hashes and timestamps |
-| `~/.apm/store/` | Git clones |
+| `~/.config/apm/packages.toml` | Declared packages — source of truth |
+| `~/.config/apm/packages.lock` | Pinned commit hashes and timestamps |
+| `~/.local/share/apm/store/` | Git clones |
