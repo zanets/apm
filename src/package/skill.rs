@@ -33,7 +33,7 @@ impl Package for Skill {
     fn install(&self, name: &str) -> anyhow::Result<()> {
         let repo = self.store_path(name);
         if !repo.exists() {
-            anyhow::bail!("'{name}' not in store — run `amp skill add` first");
+            anyhow::bail!("'{name}' not in store — run `apm add` first");
         }
         super::symlink(name, &repo, &self.link_dir())
     }

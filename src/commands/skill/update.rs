@@ -24,7 +24,7 @@ pub fn run(name: Option<String>) -> anyhow::Result<()> {
     for name in targets {
         let repo = skill.store_path(&name);
         if !repo.exists() {
-            println!("  {name}: not in store — run `amp skill add` first");
+            println!("  {name}: not in store — run `apm add` first");
             continue;
         }
 

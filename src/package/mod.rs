@@ -1,6 +1,5 @@
 pub mod mcp;
 pub mod skill;
-pub mod tool;
 
 use std::path::{Path, PathBuf};
 

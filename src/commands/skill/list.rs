@@ -9,7 +9,7 @@ pub fn run() -> anyhow::Result<()> {
     let lock = Lockfile::load()?;
 
     if packages.skills.is_empty() {
-        println!("No skills in packages.toml. Add one with: amp skill add github:user/repo");
+        println!("No skills in packages.toml. Add one with: apm add github:user/repo");
         return Ok(());
     }
 

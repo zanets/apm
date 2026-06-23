@@ -41,6 +41,6 @@ pub fn run(source: String, ref_: String, name_override: Option<String>) -> anyho
     lock.save()?;
 
     println!(" done ({commit})");
-    println!("Run `amp skill enable` to activate it");
+    println!("Run `apm enable` to activate it");
     Ok(())
 }
