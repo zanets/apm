@@ -85,6 +85,8 @@ jobs:
     name: Create GitHub Release
     needs: build
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ github.ref_name }}
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -105,3 +107,36 @@ jobs:
             artifacts/*.tar.gz
             artifacts/*.zip
             artifacts/checksums.sha256
+
+  update-formula:
+    name: Update Homebrew formula
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Download checksums
+        run: gh release download ${{ github.ref_name }} --pattern "checksums.sha256" --output checksums.sha256
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Update Formula/apm.rb
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          get_sha() { grep "$1" checksums.sha256 | awk '{print $1}'; }
+          sed -i "s/version \".*\"/version \"${VERSION}\"/" Formula/apm.rb
+          sed -i "/aarch64-apple-darwin.tar.gz/{n;s/sha256 \".*\"/sha256 \"$(get_sha aarch64-apple-darwin.tar.gz)\"/}" Formula/apm.rb
+          sed -i "/x86_64-apple-darwin.tar.gz/{n;s/sha256 \".*\"/sha256 \"$(get_sha x86_64-apple-darwin.tar.gz)\"/}" Formula/apm.rb
+          sed -i "/aarch64-unknown-linux-gnu.tar.gz/{n;s/sha256 \".*\"/sha256 \"$(get_sha aarch64-unknown-linux-gnu.tar.gz)\"/}" Formula/apm.rb
+          sed -i "/x86_64-unknown-linux-gnu.tar.gz/{n;s/sha256 \".*\"/sha256 \"$(get_sha x86_64-unknown-linux-gnu.tar.gz)\"/}" Formula/apm.rb
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/apm.rb
+          git diff --cached --quiet || git commit -m "chore(formula): update apm.rb for ${{ github.ref_name }}"
+          git push
