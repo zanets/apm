@@ -1,8 +1,8 @@
 # apm
 
-[Claude Code](https://claude.ai/code) 的套件管理器 — 從 GitHub 安裝與管理 skills、tools 及 MCP servers。
+[Claude Code](https://claude.ai/code) 的套件管理器 — 從 GitHub 安裝與管理 skills 及 MCP servers。
 
-## 安裝
+## 安��
 
 **Homebrew（建議）**
 
@@ -19,56 +19,37 @@ cargo install --path .
 
 ## 概念
 
-| 類型 | 說明 | 存放位置 |
-|------|------|---------|
-| **Skill** | 斜線指令（如 `/review`） | `~/.claude/skills/` |
-| **Tool** | Claude 工具定義 | `~/.claude/tools/` |
-| **MCP** | MCP server 程序 | 透過 `claude` CLI 註冊 |
-
-apm 採用 **store + symlink** 架構：套件統一 clone 到 `~/.apm/store/`，再以 symlink 連結到 agent 目錄。`update` 只需執行一次 `git pull`，symlink 自動生效。
+套件是安裝到 `~/.claude/skills/` 的斜線指令（`.md` 檔）。apm 從 GitHub clone 到本地 store，再以 symlink 連結到 agent 目錄。
 
 ```
 ~/.apm/
 ├── packages.toml       # 宣告的套件清單
 ├── packages.lock       # 鎖定的 commit 版本
 └── store/
-    ├── skills/<name>/
-    └── tools/<name>/
+    └── skills/<name>/
 
 ~/.claude/
-├── skills/<name> -> ~/.apm/store/skills/<name>
-└── tools/<name>  -> ~/.apm/store/tools/<name>
+└── skills/<name> -> ~/.apm/store/skills/<name>
 ```
 
 ## 指令
 
-### Skills
+### 套件
 
 ```bash
-apm skill add user/repo              # clone 並註冊
-apm skill add user/repo --ref dev    # 鎖定特定 branch 或 tag
-apm skill add user/repo --name foo   # 自訂 skill 名稱
+apm add user/repo              # clone 並註冊
+apm add user/repo --ref dev    # 鎖定特定 branch 或 tag
+apm add user/repo --name foo   # 自訂套件名稱
 
-apm skill enable                     # 將所有 skills symlink 到 ~/.claude/skills/
-apm skill enable <name>              # 啟用單一 skill
-apm skill disable [name]             # 移除 symlink，保留 store
+apm enable                     # 將所有套件 symlink 到 ~/.claude/skills/
+apm enable <name>              # 啟用單一套件
+apm disable [name]             # 移除 symlink，保留 store
 
-apm skill update                     # git pull 所有 skills
-apm skill update <name>              # 更新單一 skill
+apm update                     # git pull 所有套件
+apm update <name>              # 更新單一套件
 
-apm skill remove <name>              # 停用並從 store 及 packages.toml 刪除
-apm skill list                       # 顯示所有 skills 的狀態
-```
-
-### Tools
-
-```bash
-apm tool add user/repo               # 參數與 skill add 相同
-apm tool enable [name]
-apm tool disable [name]
-apm tool update [name]
-apm tool remove <name>
-apm tool list
+apm remove <name>              # 停用並從 store 及 packages.toml 刪除
+apm list                       # 顯示所有套件的狀態
 ```
 
 ### MCP Servers
@@ -79,7 +60,7 @@ apm mcp remove <name>               # 從 Claude 移除
 apm mcp list                         # 列出已註冊的 servers
 ```
 
-MCP 管理委派給 `claude` CLI（`claude mcp add/remove`）。
+MCP 管理委派給 `claude` CLI���`claude mcp add/remove`）。
 
 ## 來源格式
 

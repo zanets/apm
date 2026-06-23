@@ -1,6 +1,6 @@
 # apm
 
-A package manager for [Claude Code](https://claude.ai/code) — install and manage skills, tools, and MCP servers from GitHub.
+A package manager for [Claude Code](https://claude.ai/code) — install and manage skills and MCP servers from GitHub.
 
 ## Install
 
@@ -19,56 +19,37 @@ cargo install --path .
 
 ## Concepts
 
-| Type | What it is | Where it lives |
-|------|-----------|----------------|
-| **Skill** | A slash command (e.g. `/review`) | `~/.claude/skills/` |
-| **Tool** | A Claude tool definition | `~/.claude/tools/` |
-| **MCP** | An MCP server process | registered via `claude` CLI |
-
-apm uses a **store + symlink** model: packages are cloned once into `~/.apm/store/` and symlinked into agent directories. `update` is a single `git pull`; the symlink picks it up automatically.
+Packages are slash commands (`.md` files) installed into `~/.claude/skills/`. apm clones them from GitHub into a local store and symlinks them into agent directories.
 
 ```
 ~/.apm/
 ├── packages.toml       # declared packages
 ├── packages.lock       # pinned commits
 └── store/
-    ├── skills/<name>/
-    └── tools/<name>/
+    └── skills/<name>/
 
 ~/.claude/
-├── skills/<name> -> ~/.apm/store/skills/<name>
-└── tools/<name>  -> ~/.apm/store/tools/<name>
+└── skills/<name> -> ~/.apm/store/skills/<name>
 ```
 
 ## Commands
 
-### Skills
+### Packages
 
 ```bash
-apm skill add user/repo              # clone & register
-apm skill add user/repo --ref dev    # pin to a branch or tag
-apm skill add user/repo --name foo   # override the skill name
+apm add user/repo              # clone & register
+apm add user/repo --ref dev    # pin to a branch or tag
+apm add user/repo --name foo   # override the package name
 
-apm skill enable                     # symlink all skills into ~/.claude/skills/
-apm skill enable <name>              # enable one skill
-apm skill disable [name]             # remove symlink, keep store
+apm enable                     # symlink all packages into ~/.claude/skills/
+apm enable <name>              # enable one package
+apm disable [name]             # remove symlink, keep store
 
-apm skill update                     # git pull all skills
-apm skill update <name>              # update one skill
+apm update                     # git pull all packages
+apm update <name>              # update one package
 
-apm skill remove <name>              # disable + delete from store & packages.toml
-apm skill list                       # show status of all skills
-```
-
-### Tools
-
-```bash
-apm tool add user/repo               # same flags as skill add
-apm tool enable [name]
-apm tool disable [name]
-apm tool update [name]
-apm tool remove <name>
-apm tool list
+apm remove <name>              # disable + delete from store & packages.toml
+apm list                       # show status of all packages
 ```
 
 ### MCP Servers
@@ -90,5 +71,5 @@ MCP management delegates to the `claude` CLI (`claude mcp add/remove`).
 | Path | Purpose |
 |------|---------|
 | `~/.apm/packages.toml` | Declared packages — source of truth |
-| `~/.apm/packages.lock` | Pinned commit hashes and timestapms |
+| `~/.apm/packages.lock` | Pinned commit hashes and timestamps |
 | `~/.apm/store/` | Git clones |
