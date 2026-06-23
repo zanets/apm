@@ -2,14 +2,14 @@
 
 ## Overview
 
-`amp` is a CLI package manager for Claude Code packages (skills, tools, MCP servers). It uses a **store + symlink** architecture: packages are cloned once into a central store, then symlinked into agent directories.
+`apm` is a CLI package manager for Claude Code packages (skills, tools, MCP servers). It uses a **store + symlink** architecture: packages are cloned once into a central store, then symlinked into agent directories.
 
 ## Directory Layout
 
 ```
-~/.amp/
+~/.apm/
 ├── packages.toml       # declared packages (source of truth)
-├── packages.lock       # pinned commits + timestamps
+├── packages.lock       # pinned commits + timestapms
 └── store/
     ├── skills/
     │   └── <name>/     # git clone of the skill repo
@@ -18,9 +18,9 @@
 
 ~/.claude/
 ├── skills/
-│   └── <name> -> ~/.amp/store/skills/<name>   # symlink
+│   └── <name> -> ~/.apm/store/skills/<name>   # symlink
 └── tools/
-    └── <name> -> ~/.amp/store/tools/<name>    # symlink
+    └── <name> -> ~/.apm/store/tools/<name>    # symlink
 ```
 
 ## Module Map
@@ -43,20 +43,20 @@ src/
 
 ## Data Flow
 
-### `amp skill add user/repo`
+### `apm skill add user/repo`
 
 1. `parse_source()` → `github:user/repo` + derived name
 2. Conflict check against `packages.toml`
-3. `git clone --depth=1` into `~/.amp/store/skills/<name>`
+3. `git clone --depth=1` into `~/.apm/store/skills/<name>`
 4. Write `packages.toml` + `packages.lock` (only on success)
 
-### `amp skill install`
+### `apm skill install`
 
 1. Read `packages.toml`
 2. For each skill: `symlink(store_path, link_dir)`
 3. `link_dir` is determined by `Agent` variant (currently only `Claude`)
 
-### `amp skill update`
+### `apm skill update`
 
 1. `git pull --ff-only` in store dir
 2. Update commit hash in `packages.lock`

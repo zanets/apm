@@ -2,28 +2,28 @@
 
 ## Store + Symlink (Homebrew pattern)
 
-**Decision:** Clone packages into `~/.amp/store/` and symlink into agent directories, rather than cloning directly into `~/.claude/skills/`.
+**Decision:** Clone packages into `~/.apm/store/` and symlink into agent directories, rather than cloning directly into `~/.claude/skills/`.
 
-**Why:** Separates amp's managed state from Claude's runtime directories. Consequences:
+**Why:** Separates apm's managed state from Claude's runtime directories. Consequences:
 - `update` only needs `git pull` in one place; symlinks pick it up automatically
 - Multiple agents can share the same store copy
-- Easy to inspect what amp manages without touching agent config
+- Easy to inspect what apm manages without touching agent config
 
 ---
 
 ## `add` = register + clone (merged)
 
-**Decision:** `amp skill add` both writes `packages.toml` and clones to store in one step. There is no separate `get` command.
+**Decision:** `apm skill add` both writes `packages.toml` and clones to store in one step. There is no separate `get` command.
 
 **Why:** The two-step workflow (`add` then `get`) added friction with no benefit for the common case. If the clone fails, `packages.toml` is not written (clone-first, write-on-success), so there is no orphaned entry.
 
 ---
 
-## Nested subcommands (`amp skill <cmd>`, `amp tool <cmd>`)
+## Nested subcommands (`apm skill <cmd>`, `apm tool <cmd>`)
 
-**Decision:** Use `amp skill add` / `amp tool add` instead of flat `amp add --type skill`.
+**Decision:** Use `apm skill add` / `apm tool add` instead of flat `apm add --type skill`.
 
-**Why:** Anticipates `amp mcp <cmd>` without a breaking CLI change. Each package type can have type-specific flags without polluting a shared namespace.
+**Why:** Anticipates `apm mcp <cmd>` without a breaking CLI change. Each package type can have type-specific flags without polluting a shared namespace.
 
 ---
 
@@ -31,7 +31,7 @@
 
 **Decision:** Use `std::process::Command` to call `git` for clone/pull/rev-parse.
 
-**Why:** libgit2 (via `git2` crate) adds significant compile weight and complexity. The operations needed (shallow clone, ff-only pull, rev-parse HEAD) are simple and well-handled by the system git. Users who have amp installed will have git installed.
+**Why:** libgit2 (via `git2` crate) adds significant compile weight and complexity. The operations needed (shallow clone, ff-only pull, rev-parse HEAD) are simple and well-handled by the system git. Users who have apm installed will have git installed.
 
 ---
 

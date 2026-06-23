@@ -10,7 +10,7 @@ use commands::skill::SkillCommands;
 use commands::tool::ToolCommands;
 
 #[derive(Parser)]
-#[command(name = "amp", about = "Agent package manager")]
+#[command(name = "apm", about = "Agent package manager")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
