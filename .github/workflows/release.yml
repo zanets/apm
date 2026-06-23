@@ -113,12 +113,14 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout tap repo
+        uses: actions/checkout@v4
         with:
-          ref: main
+          repository: zanets/homebrew-apm
+          ssh-key: ${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}
 
       - name: Download checksums
-        run: gh release download ${{ github.ref_name }} --pattern "checksums.sha256" --output checksums.sha256
+        run: gh release download ${{ github.ref_name }} --repo zanets/apm --pattern "checksums.sha256" --output checksums.sha256
         env:
           GH_TOKEN: ${{ github.token }}
 
