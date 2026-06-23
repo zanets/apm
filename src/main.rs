@@ -5,6 +5,7 @@ mod lockfile;
 mod package;
 
 use clap::{Parser, Subcommand};
+use commands::claudemd::ClaudemdCommands;
 use commands::mcp::McpCommands;
 
 #[derive(Parser)]
@@ -60,6 +61,12 @@ enum Commands {
         #[command(subcommand)]
         command: McpCommands,
     },
+    /// Manage project CLAUDE.md files (local-only, keyed by git remote)
+    #[command(name = "md")]
+    Claudemd {
+        #[command(subcommand)]
+        command: ClaudemdCommands,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -72,5 +79,6 @@ fn main() -> anyhow::Result<()> {
         Commands::Update { name } => commands::skill::update::run(name),
         Commands::List => commands::skill::list::run(),
         Commands::Mcp { command } => commands::mcp::run(command),
+        Commands::Claudemd { command } => commands::claudemd::run(command),
     }
 }

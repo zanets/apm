@@ -124,6 +124,10 @@ pub fn data_dir() -> PathBuf {
         .join("apm")
 }
 
+pub fn claudemds_dir() -> PathBuf {
+    data_dir().join("claudemds")
+}
+
 pub fn packages_path() -> PathBuf {
     config_dir().join("packages.toml")
 }
