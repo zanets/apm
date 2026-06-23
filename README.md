@@ -8,6 +8,7 @@ A package manager for [Claude Code](https://claude.ai/code) — install and mana
 
 ```bash
 brew tap zanets/apm
+brew trust --tap zanets/apm
 brew install apm
 ```
 

@@ -8,6 +8,7 @@
 
 ```bash
 brew tap zanets/apm
+brew trust --tap zanets/apm
 brew install apm
 ```
 
