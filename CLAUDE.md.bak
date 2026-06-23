@@ -1,0 +1,114 @@
+# CLAUDE.md
+
+Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
+
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+
+## 1. Think Before Coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+## 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+## 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+## 5. Documentation & Artifacts Rules
+- **File Location**: All generated documentation, architecture design text files, and markdown process logs MUST be placed in the `doc/` folder at the project root.
+- **Path Awareness**: If a `doc/` folder does not exist, you are allowed to create it first before writing files.
+- **Reference Style**: When creating or updating files, always use relative paths starting with `doc/` (e.g., `doc/architecture.md`, `doc/flowchart.md`).
+- **No Root Clutter**: Never clutter the project root directory with newly generated explanatory markdown files.
+
+## 6 Git & Commit Guidelines
+
+### Push bypass
+When running `git push`, the pre-push hook may prompt `Confirm? [y|n]` but cannot get interactive input in this environment. Use `NOCHK=1 git push` to bypass it.
+
+- **Format**: You MUST follow the Conventional Commits specification.
+- **Structure**: Every commit message must follow this format: `<type>(<scope>): <description>`
+- **Allowed Types**:
+  - `feat`: A new feature (e.g., `feat(crawler): add PTT support`)
+  - `fix`: A bug fix (e.g., `fix(auth): resolve token expiration`)
+  - `docs`: Documentation only changes (e.g., `docs(api): update doc/README.md`)
+  - `style`: Changes that do not affect the meaning of the code (white-space, formatting, etc.)
+  - `refactor`: A code change that neither fixes a bug nor adds a feature
+  - `perf`: A code change that improves performance
+  - `test`: Adding missing tests or correcting existing tests
+  - `build`: Changes that affect the build system or external dependencies
+  - `ci`: Changes to CI configuration files and scripts
+  - `chore`: Other changes that don't modify src or test files
+  - `revert`: Reverts a previous commit
+- **Rules**:
+  - Use lowercase for the description.
+  - Do NOT end the commit message with a period (`.`).
+  - Keep the first line under 50 characters.
+  - If a detailed explanation is needed, add a blank line, then write a concise, bulleted description in the body.
+  - **Crucial**: Never include generic messages like "update files" or "fix stuff". Be specific based on actual code changes.
+
+
+## 7. Communication & Response Style
+
+**Protect my focus. No fluff. Clear visual hierarchy.**
+
+- **No Conversational Filler**: Never say "Sure, I can help with that", "Here is the modified code", or "Let me know if you need anything else". Start directly with the answer or code block.
+- **Code Block Rule**: When generating or updating code, only output the relevant code snippet or the specific lines that need to be changed. Use `// ... existing code ...` or comments to represent unchanged parts. Never reprint an entire file for a minor change.
+- **Taiwanese Local Awareness**: When interpreting requirements or explaining concepts related to social media, trends, or community feedback, you must understand Taiwanese internet slang, sarcasm, and culture (e.g., PTT, Dcard, Threads). Respond in Taiwan-style Traditional Chinese (`zh-TW`) using proper tech terminology (e.g., use 軟體 instead of 軟件, 專案 instead of 項目).
+
+## 8. Learning & Domain Knowledge Transfer
+When helping me debug or implementation, you MUST structure your explanation into these two hyper-focused parts:
+1. **The Root Cause (ELI5)**: Explain *why* the bug happened in 1-2 simple sentences. No fluff.
+2. **The Core Concept**: State ONLY the single, specific technical concept or rule we ran into (e.g., *Event Loop Blocking*, *Rust Ownership*, *Dart Null Safety*). Do NOT expand or lecture.
+
+3. **Auto-Log Requirement**: After outputting the chat response, you MUST automatically create a new file under `issues/` following the naming convention: `issues/<YYYYMMDD>-<short-description>.md`.
+4. **File Content**: The created file must contain the date, affected file/module, the Core Concept, the Root Cause (ELI5), and the fixed code snippet. If the `issues/` folder doesn't exist, create it first. Do this silently in the background without asking for confirmation.
+
+---
+
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

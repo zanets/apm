@@ -1,8 +1,8 @@
 # apm
 
-[Claude Code](https://claude.ai/code) 的套件管理器 — 從 GitHub 安裝與管理 skills 及 MCP servers。
+[Claude Code](https://claude.ai/code) 的套件管理器 — 安裝與管理 skills、MCP servers 及專案 CLAUDE.md 檔案。
 
-## 安��
+## 安裝
 
 **Homebrew（建議）**
 
@@ -20,15 +20,22 @@ cargo install --path .
 
 ## 概念
 
-套件是安裝到 `~/.claude/skills/` 的斜線指令（`.md` 檔）。apm 從 GitHub clone 到本地 store，再以 symlink 連結到 agent 目錄。
+apm 管理三種東西：
+
+- **Skills** — 從 GitHub clone 的斜線指令（`.md` 檔），symlink 到 `~/.claude/skills/`
+- **MCP servers** — 透過 `claude` CLI 註冊，追蹤於 `packages.toml`
+- **CLAUDE.md 檔案** — 專案層級的行為規則，本機儲存並 symlink 到各個 repo
 
 ```
-~/.config/apm/                     # $XDG_CONFIG_HOME/apm
-├── packages.toml                  # 宣告的套件清單
-└── packages.lock                  # 鎖定的 commit 版本
+~/.config/apm/                       # $XDG_CONFIG_HOME/apm
+├── packages.toml                    # 宣告的套件與 MCP servers
+└── packages.lock                    # 鎖定的 skill commit 版本
 
-~/.local/share/apm/store/skills/   # $XDG_DATA_HOME/apm
+~/.local/share/apm/store/skills/     # $XDG_DATA_HOME/apm
 └── <name>/
+
+~/.local/share/apm/claudemds/        # 儲存的 CLAUDE.md 檔案
+└── <key>/                           # 以 git remote URL 為 key
 
 ~/.claude/skills/
 └── <name> -> ~/.local/share/apm/store/skills/<name>
@@ -42,10 +49,15 @@ cargo install --path .
 apm add user/repo              # clone 並註冊
 apm add user/repo --ref dev    # 鎖定特定 branch 或 tag
 apm add user/repo --name foo   # 自訂套件名稱
+```
 
+`user/repo` 與 `github:user/repo` 皆可接受。不含斜線的純名稱會被拒絕並提示錯誤。
+
+```bash
 apm enable                     # 將所有套件 symlink 到 ~/.claude/skills/
 apm enable <name>              # 啟用單一套件
-apm disable [name]             # 移除 symlink，保留 store
+apm disable                    # 移除所有 symlink，保留 store
+apm disable <name>             # 移除單一套件的 symlink，保留 store
 
 apm update                     # git pull 所有套件
 apm update <name>              # 更新單一套件
@@ -58,20 +70,56 @@ apm list                       # 顯示所有套件的狀態
 
 ```bash
 apm mcp add <name> <command> [args]  # 註冊並加入 Claude
-apm mcp remove <name>               # 從 Claude 移除
+apm mcp remove <name>                # 從 Claude 移除
 apm mcp list                         # 列出已註冊的 servers
 ```
 
-MCP 管理委派給 `claude` CLI���`claude mcp add/remove`）。
+MCP 管理委派給 `claude` CLI（`claude mcp add/remove`）。
 
-## 來源格式
+### CLAUDE.md
 
-`user/repo` 與 `github:user/repo` 皆可接受。不含斜線的純名稱會被拒絕並提示錯誤。
+在共用 repo 上工作時，個人的 `CLAUDE.md` 無法 commit — 但每次 re-clone 都要重寫也很麻煩。`apm md` 將它存在本機，並以 git remote URL 為 key，讓它跟著 repo 走，不管 clone 到哪裡都能還原。
+
+```bash
+apm md new               # 在當前目錄建立新的 CLAUDE.md，自動存入 store 並建立 symlink
+apm md save              # 將 CLAUDE.md 移入 store，原位置建立 symlink
+apm md save -p           # 掃描 repo，逐一確認每個檔案是否存入
+apm md restore           # re-clone 後重建所有 symlink
+apm md list              # 顯示所有已儲存的 CLAUDE.md
+apm md list -u           # 顯示目前 repo 中未納管的 CLAUDE.md
+apm md remove <key>      # 從 store 刪除並清除對應 symlink
+```
+
+檔案以 symlink 而非複製的方式存放 — 直接編輯 `CLAUDE.md` 即寫入 store，不需要重新 save。
+
+Claude Code 也會讀取子目錄的 `CLAUDE.md`，因此 `save`/`restore` 會處理整棵樹：
+
+```
+project/
+├── CLAUDE.md          → ~/.local/share/apm/claudemds/<key>/CLAUDE.md
+└── src/
+    └── CLAUDE.md      → ~/.local/share/apm/claudemds/<key>/src/CLAUDE.md
+```
+
+Key 由 git remote URL 推導（`https://github.com/org/repo` → `github.com_org_repo`），因此不管 clone 到哪個路徑，都能找到同一份 store 記錄。
+
+## 設計重點
+
+**遵循 XDG Base Directory 規範。** 設定檔存放於 `$XDG_CONFIG_HOME/apm`（預設 `~/.config/apm`），資料存放於 `$XDG_DATA_HOME/apm`（預設 `~/.local/share/apm`）。兩個路徑都尊重環境變數，非標準 home 配置也能正常運作。
+
+**Symlink 而非複製。** Skills 和 CLAUDE.md 都以 symlink 方式連結，而非複製到目標位置。實際檔案存在 store 裡，symlink 只是指標。Skills 的更新透過 `git pull` 在 store 端完成；CLAUDE.md 的編輯也直接寫入 store，不需要額外同步步驟。
+
+**CLAUDE.md 以 remote URL 為 key。** apm 不追蹤本機路徑，而是從 `git remote get-url origin` 推導 key（`https://github.com/org/repo` → `github.com_org_repo`）。這讓 store 記錄在 re-clone 到不同路徑後仍然有效，跨機器共用同一個 remote 也能找到對應記錄。
+
+**用 `git ls-files` 做搜尋。** 掃描未納管的 CLAUDE.md（`apm md save -p`、`apm md list -u`）委派給 `git ls-files`，而非遞迴走訪檔案系統。在大型 repo 中速度更快，且自動尊重 `.gitignore`。
+
+**MCP 委派給 claude CLI。** apm 不自行實作 MCP 註冊邏輯，直接委派給 `claude` CLI，只在 `packages.toml` 記錄設定以便重現。
 
 ## 檔案說明
 
 | 路徑 | 用途 |
 |------|------|
-| `~/.config/apm/packages.toml` | 宣告的套件清單，唯一事實來源 |
+| `~/.config/apm/packages.toml` | 宣告的套件與 MCP servers，唯一事實來源 |
 | `~/.config/apm/packages.lock` | 鎖定的 commit hash 與時間戳記 |
 | `~/.local/share/apm/store/` | Git clone 存放目錄 |
+| `~/.local/share/apm/claudemds/` | 儲存的 CLAUDE.md 檔案，以 remote URL 為 key |
