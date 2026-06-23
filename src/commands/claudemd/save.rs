@@ -2,10 +2,13 @@ use crate::{config::claudemds_dir, git};
 use std::{
     env,
     io::{self, Write},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
-pub fn run(pick: bool) -> anyhow::Result<()> {
+pub fn run(pick: bool, file: Option<PathBuf>) -> anyhow::Result<()> {
+    if let Some(path) = file {
+        return save_standalone(path);
+    }
     let cwd = env::current_dir()?;
     let repo_root = git::repo_root(&cwd)?;
     let url = git::remote_url(&cwd)?;
@@ -16,6 +19,38 @@ pub fn run(pick: bool) -> anyhow::Result<()> {
     } else {
         save_one(&cwd, &repo_root, &key)
     }
+}
+
+fn save_standalone(path: PathBuf) -> anyhow::Result<()> {
+    let path = path.canonicalize()
+        .map_err(|_| anyhow::anyhow!("path not found: {}", path.display()))?;
+    if path.file_name().and_then(|n| n.to_str()) != Some("CLAUDE.md") {
+        anyhow::bail!("expected a CLAUDE.md file, got: {}", path.display());
+    }
+    if path.is_symlink() {
+        anyhow::bail!("already managed by apm (is a symlink)");
+    }
+    let encoded = path_to_store_key(&path);
+    let store_dir = claudemds_dir().join("file").join(&encoded);
+    std::fs::create_dir_all(&store_dir)?;
+    std::fs::write(store_dir.join(".path"), path.to_string_lossy().as_bytes())?;
+    let store_file = store_dir.join("CLAUDE.md");
+    std::fs::rename(&path, &store_file)?;
+    #[cfg(unix)]
+    std::os::unix::fs::symlink(&store_file, &path)?;
+    #[cfg(windows)]
+    std::os::windows::fs::symlink_file(&store_file, &path)?;
+    println!("  saved {}", path.display());
+    println!("  (symlinked in place — edits are live)");
+    Ok(())
+}
+
+/// Encodes an absolute file path into a filesystem-safe store key.
+/// `/Users/zanets/CLAUDE.md` → `Users_zanets_CLAUDE.md`
+pub fn path_to_store_key(path: &Path) -> String {
+    path.to_string_lossy()
+        .trim_start_matches('/')
+        .replace('/', "_")
 }
 
 fn run_pick(repo_root: &Path, key: &str) -> anyhow::Result<()> {

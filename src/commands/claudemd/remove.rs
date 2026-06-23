@@ -6,12 +6,28 @@ use std::{
 };
 
 pub fn run(key: String) -> anyhow::Result<()> {
+    // Standalone: key is an absolute path (starts with /)
+    if key.starts_with('/') {
+        let file_path = Path::new(&key);
+        let encoded = super::save::path_to_store_key(file_path);
+        let store_dir = claudemds_dir().join("file").join(&encoded);
+        if !store_dir.exists() {
+            anyhow::bail!("'{key}' not found — run `apm claudemd list` to see saved entries");
+        }
+        if file_path.is_symlink() {
+            let _ = std::fs::remove_file(file_path);
+        }
+        std::fs::remove_dir_all(&store_dir)?;
+        println!("  removed {key}");
+        return Ok(());
+    }
+
+    // Git-backed entry
     let store_dir = claudemds_dir().join(&key);
     if !store_dir.exists() {
         anyhow::bail!("'{key}' not found — run `apm claudemd list` to see saved entries");
     }
 
-    // Best-effort: clean symlinks if we're inside the matching repo.
     let cwd = env::current_dir()?;
     if let Ok(repo_root) = git::repo_root(&cwd) {
         if let Ok(url) = git::remote_url(&cwd) {

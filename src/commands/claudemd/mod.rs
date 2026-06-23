@@ -15,6 +15,9 @@ pub enum ClaudemdCommands {
         /// Scan repo and confirm each CLAUDE.md interactively before saving
         #[arg(short = 'p', long)]
         pick: bool,
+        /// Save a standalone CLAUDE.md by absolute path (key = absolute path, no git needed)
+        #[arg(short = 'f', long, value_name = "PATH")]
+        file: Option<std::path::PathBuf>,
     },
     /// Restore CLAUDE.md for the current project from apm store
     Restore,
@@ -34,7 +37,7 @@ pub enum ClaudemdCommands {
 pub fn run(cmd: ClaudemdCommands) -> anyhow::Result<()> {
     match cmd {
         ClaudemdCommands::New => new::run(),
-        ClaudemdCommands::Save { pick } => save::run(pick),
+        ClaudemdCommands::Save { pick, file } => save::run(pick, file),
         ClaudemdCommands::Restore => restore::run(),
         ClaudemdCommands::List { unmanaged } => list::run(unmanaged),
         ClaudemdCommands::Remove { key } => remove::run(key),
