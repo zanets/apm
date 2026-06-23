@@ -1,6 +1,6 @@
-use crate::config::{amp_dir, Agent};
+use crate::config::Agent;
 use anyhow::Context;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 pub struct Mcp {
     pub agent: Agent,
@@ -11,59 +11,18 @@ impl Mcp {
         Self { agent }
     }
 
-    pub fn store_base() -> PathBuf {
-        amp_dir().join("store").join("mcps")
-    }
-
-    pub fn store_path(&self, name: &str) -> PathBuf {
-        Self::store_base().join(name)
-    }
-
     pub fn enable(&self, name: &str, command: &str, args: &[String]) -> anyhow::Result<()> {
-        let path = self.agent.settings_path();
-        let mut settings = load_settings(&path)?;
-
-        if settings.get("mcpServers").and_then(|s| s.get(name)).is_some() {
-            println!("  {name}: already enabled");
-            return Ok(());
+        match self.agent {
+            Agent::Claude => enable_via_claude(name, command, args),
+            a => anyhow::bail!("MCP is not supported for agent '{}'", a.as_str()),
         }
-
-        {
-            let obj = settings.as_object_mut()
-                .context("settings.json root is not a JSON object")?;
-            obj.entry("mcpServers")
-                .or_insert_with(|| serde_json::json!({}))
-                .as_object_mut()
-                .context("mcpServers is not an object in settings.json")?
-                .insert(name.to_string(), serde_json::json!({
-                    "type": "stdio",
-                    "command": command,
-                    "args": args,
-                }));
-        }
-
-        save_settings(&path, &settings)?;
-        println!("  enabled {name}");
-        Ok(())
     }
 
     pub fn disable(&self, name: &str) -> anyhow::Result<()> {
-        let path = self.agent.settings_path();
-        let mut settings = load_settings(&path)?;
-
-        let removed = settings
-            .get_mut("mcpServers")
-            .and_then(|v| v.as_object_mut())
-            .map(|servers| servers.remove(name).is_some())
-            .unwrap_or(false);
-
-        if removed {
-            save_settings(&path, &settings)?;
-            println!("  disabled {name}");
-        } else {
-            println!("  {name}: not enabled, nothing to disable");
+        match self.agent {
+            Agent::Claude => disable_via_claude(name),
+            a => anyhow::bail!("MCP is not supported for agent '{}'", a.as_str()),
         }
-        Ok(())
     }
 
     pub fn is_enabled(&self, name: &str) -> bool {
@@ -73,6 +32,30 @@ impl Mcp {
             .and_then(|s| s.get("mcpServers")?.get(name).map(|_| true))
             .unwrap_or(false)
     }
+}
+
+fn enable_via_claude(name: &str, command: &str, args: &[String]) -> anyhow::Result<()> {
+    let mut cmd = std::process::Command::new("claude");
+    cmd.args(["mcp", "add", name, "--", command]);
+    cmd.args(args);
+    let status = cmd.status().context("claude not found in PATH")?;
+    if !status.success() {
+        anyhow::bail!("claude mcp add failed for {name}");
+    }
+    println!("  enabled {name} (claude)");
+    Ok(())
+}
+
+fn disable_via_claude(name: &str) -> anyhow::Result<()> {
+    let status = std::process::Command::new("claude")
+        .args(["mcp", "remove", name])
+        .status()
+        .context("claude not found in PATH")?;
+    if !status.success() {
+        anyhow::bail!("claude mcp remove failed for {name}");
+    }
+    println!("  disabled {name} (claude)");
+    Ok(())
 }
 
 fn load_settings(path: &Path) -> anyhow::Result<serde_json::Value> {
@@ -85,10 +68,4 @@ fn load_settings(path: &Path) -> anyhow::Result<serde_json::Value> {
         return Ok(serde_json::Value::Object(Default::default()));
     }
     serde_json::from_str(&content).context("invalid settings.json")
-}
-
-fn save_settings(path: &Path, settings: &serde_json::Value) -> anyhow::Result<()> {
-    std::fs::create_dir_all(path.parent().unwrap())?;
-    std::fs::write(path, serde_json::to_string_pretty(settings)?)
-        .with_context(|| format!("cannot write {}", path.display()))
 }

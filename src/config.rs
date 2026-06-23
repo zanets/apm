@@ -29,11 +29,7 @@ pub struct ToolEntry {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct McpEntry {
-    pub source: String,
-    #[serde(rename = "ref", default = "default_ref")]
-    pub ref_: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub command: Option<String>,
+    pub command: String,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub args: Vec<String>,
 }

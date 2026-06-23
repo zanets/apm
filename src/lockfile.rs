@@ -8,8 +8,6 @@ pub struct Lockfile {
     pub skills: HashMap<String, LockEntry>,
     #[serde(default)]
     pub tools: HashMap<String, LockEntry>,
-    #[serde(default)]
-    pub mcps: HashMap<String, LockEntry>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
