@@ -51,21 +51,33 @@ fn run_stored() -> anyhow::Result<()> {
 
 fn run_unmanaged() -> anyhow::Result<()> {
     let cwd = env::current_dir()?;
-    let repo_root = git::repo_root(&cwd)?;
-    let files = git::find_claude_mds(&repo_root)?;
 
-    if files.is_empty() {
-        println!("No unmanaged CLAUDE.md files found.");
-        return Ok(());
-    }
-
-    for rel_path in files {
-        let rel_dir = rel_path.parent().unwrap_or(Path::new(""));
-        let display = super::save::rel_display(rel_dir);
-        let size = std::fs::metadata(repo_root.join(&rel_path))
-            .map(|m| m.len())
-            .unwrap_or(0);
-        println!("  {display:<50} {size} bytes");
+    match git::repo_root(&cwd) {
+        Ok(repo_root) => {
+            let files = git::find_claude_mds(&repo_root)?;
+            if files.is_empty() {
+                println!("No unmanaged CLAUDE.md files found.");
+                return Ok(());
+            }
+            for rel_path in files {
+                let rel_dir = rel_path.parent().unwrap_or(Path::new(""));
+                let display = super::save::rel_display(rel_dir);
+                let size = std::fs::metadata(repo_root.join(&rel_path))
+                    .map(|m| m.len())
+                    .unwrap_or(0);
+                println!("  {display:<50} {size} bytes");
+            }
+        }
+        Err(_) => {
+            let local = cwd.join("CLAUDE.md");
+            if local.exists() {
+                let size = std::fs::metadata(&local).map(|m| m.len()).unwrap_or(0);
+                let display = super::save::rel_display(Path::new(""));
+                println!("  {display:<50} {size} bytes");
+            } else {
+                println!("No unmanaged CLAUDE.md files found.");
+            }
+        }
     }
 
     Ok(())
