@@ -5,6 +5,17 @@ use std::{
     path::{Path, PathBuf},
 };
 
+fn move_file(src: &Path, dst: &Path) -> io::Result<()> {
+    match std::fs::rename(src, dst) {
+        Ok(()) => Ok(()),
+        Err(e) if e.kind() == io::ErrorKind::CrossesDevices => {
+            std::fs::copy(src, dst)?;
+            std::fs::remove_file(src)
+        }
+        Err(e) => Err(e),
+    }
+}
+
 pub fn run(pick: bool, file: Option<PathBuf>) -> anyhow::Result<()> {
     if let Some(path) = file {
         return save_standalone(path);
@@ -35,7 +46,7 @@ fn save_standalone(path: PathBuf) -> anyhow::Result<()> {
     std::fs::create_dir_all(&store_dir)?;
     std::fs::write(store_dir.join(".path"), path.to_string_lossy().as_bytes())?;
     let store_file = store_dir.join("CLAUDE.md");
-    std::fs::rename(&path, &store_file)?;
+    move_file(&path, &store_file)?;
     #[cfg(unix)]
     std::os::unix::fs::symlink(&store_file, &path)?;
     #[cfg(windows)]
@@ -99,7 +110,7 @@ fn save_one(cwd: &Path, repo_root: &Path, key: &str) -> anyhow::Result<()> {
 fn symlink_into_store(claude_md: &Path, rel: &Path, key: &str) -> anyhow::Result<()> {
     let store_file = claudemds_dir().join(key).join(rel).join("CLAUDE.md");
     std::fs::create_dir_all(store_file.parent().unwrap())?;
-    std::fs::rename(claude_md, &store_file)?;
+    move_file(claude_md, &store_file)?;
 
     #[cfg(unix)]
     std::os::unix::fs::symlink(&store_file, claude_md)?;
