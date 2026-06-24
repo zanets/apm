@@ -56,6 +56,8 @@ enum Commands {
     },
     /// List packages and their status
     List,
+    /// Print apm storage paths
+    Env,
     /// Manage MCP servers
     Mcp {
         #[command(subcommand)]
@@ -78,6 +80,7 @@ fn main() -> anyhow::Result<()> {
         Commands::Remove { name } => commands::skill::remove::run(name),
         Commands::Update { name } => commands::skill::update::run(name),
         Commands::List => commands::skill::list::run(),
+        Commands::Env => commands::env::run(),
         Commands::Mcp { command } => commands::mcp::run(command),
         Commands::Claudemd { command } => commands::claudemd::run(command),
     }
