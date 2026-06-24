@@ -56,6 +56,8 @@ apm add user/repo --name foo   # 自訂套件名稱
 `user/repo` 與 `github:user/repo` 皆可接受。不含斜線的純名稱會被拒絕並提示錯誤。
 
 ```bash
+apm install                    # 安裝 packages.toml 中宣告的所有套件（冪等）
+
 apm enable                     # 將所有套件 symlink 到 ~/.claude/skills/
 apm enable <name>              # 啟用單一套件
 apm disable                    # 移除所有 symlink，保留 store
@@ -136,6 +138,8 @@ apm md remove ~/CLAUDE.md
 **用 `git ls-files` 做搜尋。** 掃描未納管的 CLAUDE.md（`apm md save -p`、`apm md list -u`）委派給 `git ls-files`，而非遞迴走訪檔案系統。在大型 repo 中速度更快，且自動尊重 `.gitignore`。
 
 **路徑為 key 的獨立項目。** `save -f` 接受任意絕對路徑的 CLAUDE.md，以該路徑作為 store 的 key，而非 git remote。這讓 apm 能管理 repo 以外的檔案 — 最典型的就是 `~/CLAUDE.md`，即 Claude Code 的全域指令檔。
+
+**`apm install` 用於環境重建。** 執行 `apm install` 會讀取 `packages.toml`，將本機環境補齊至最新狀態 — clone 缺少的 skill、啟用全部套件、並向 Claude 註冊尚未加入的 MCP server。新機器只需一個指令即可重現完整設定。
 
 **MCP 委派給 claude CLI。** apm 不自行實作 MCP 註冊邏輯，直接委派給 `claude` CLI，只在 `packages.toml` 記錄設定以便重現。
 

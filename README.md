@@ -56,6 +56,8 @@ apm add user/repo --name foo   # override the package name
 `user/repo` and `github:user/repo` are both accepted. A bare name (no slash) is rejected.
 
 ```bash
+apm install                    # install everything declared in packages.toml (idempotent)
+
 apm enable                     # symlink all packages into ~/.claude/skills/
 apm enable <name>              # enable one package
 apm disable                    # remove all symlinks, keep store
@@ -136,6 +138,8 @@ apm md remove ~/CLAUDE.md
 **`git ls-files` for discovery.** Scanning for unmanaged CLAUDE.md files (`apm md save -p`, `apm md list -u`) delegates to `git ls-files` rather than walking the filesystem. This keeps discovery fast in large repos and respects `.gitignore` for free.
 
 **Standalone path-keyed entries.** `save -f` accepts any CLAUDE.md by absolute path, keying the store entry on that path rather than a git remote. This lets apm manage files that live outside any repo — most usefully `~/CLAUDE.md`, Claude Code's global instruction file.
+
+**`apm install` for bootstrapping.** Running `apm install` reads `packages.toml` and brings the local environment up to date — cloning missing skills, enabling all of them, and registering any MCP servers not yet added to Claude. This makes `packages.toml` the single command needed to reproduce a setup on a new machine.
 
 **MCP delegation.** apm doesn't reimplement MCP registration logic — it delegates to the `claude` CLI and only tracks the config in `packages.toml` for reproducibility.
 
