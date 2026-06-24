@@ -56,6 +56,8 @@ enum Commands {
     },
     /// List packages and their status
     List,
+    /// Install all packages declared in packages.toml
+    Install,
     /// Print apm storage paths
     Env,
     /// Manage MCP servers
@@ -80,6 +82,7 @@ fn main() -> anyhow::Result<()> {
         Commands::Remove { name } => commands::skill::remove::run(name),
         Commands::Update { name } => commands::skill::update::run(name),
         Commands::List => commands::skill::list::run(),
+        Commands::Install => commands::install::run(),
         Commands::Env => commands::env::run(),
         Commands::Mcp { command } => commands::mcp::run(command),
         Commands::Claudemd { command } => commands::claudemd::run(command),
