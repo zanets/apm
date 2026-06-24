@@ -22,32 +22,49 @@ fn run_stored() -> anyhow::Result<()> {
 
     let mut repos: Vec<_> = std::fs::read_dir(&base)?
         .filter_map(|e| e.ok())
-        .filter(|e| e.path().is_dir())
+        .filter(|e| {
+            let name = e.file_name();
+            e.path().is_dir() && name != ".git" && name != "file"
+        })
         .collect();
 
-    if repos.is_empty() {
+    let standalone_dir = base.join("file");
+    let has_standalone = standalone_dir.is_dir();
+
+    if repos.is_empty() && !has_standalone {
         println!("No saved CLAUDE.md files. Save one with: apm md save");
         return Ok(());
     }
 
     repos.sort_by_key(|e| e.file_name());
 
-    for repo in repos {
+    for repo in &repos {
         let dir_name = repo.file_name().to_string_lossy().to_string();
-
-        if dir_name == "file" {
-            list_standalone(&repo.path())?;
-            continue;
-        }
-
         println!("{dir_name}");
         let mut files = Vec::new();
         collect_store(&repo.path(), &repo.path(), &mut files)?;
         files.sort();
-        for (rel, size) in files {
-            let display = super::save::rel_display(&rel);
-            println!("  {display:<50} {size} bytes");
+        for (rel, size) in &files {
+            let display = if rel == std::path::Path::new("") {
+                "CLAUDE.md".to_string()
+            } else {
+                format!("{}/CLAUDE.md", rel.display())
+            };
+            let size_str = if *size == 0 {
+                "(empty)".to_string()
+            } else {
+                format!("{size} bytes")
+            };
+            println!("  {display:<50} {size_str}");
         }
+    }
+
+    if has_standalone {
+        if !repos.is_empty() {
+            println!();
+        }
+        println!("Standalone files:");
+        list_standalone(&standalone_dir)?;
     }
 
     Ok(())
