@@ -25,11 +25,37 @@ pub fn run(pick: bool, file: Option<PathBuf>) -> anyhow::Result<()> {
     let url = git::remote_url(&cwd)?;
     let key = git::remote_url_to_key(&url);
 
-    if pick {
-        run_pick(&repo_root, &key)
-    } else {
-        save_one(&cwd, &repo_root, &key)
+    let candidates = git::find_claude_mds(&repo_root)?;
+    if candidates.is_empty() {
+        println!("No unmanaged CLAUDE.md files found in repo.");
+        return Ok(());
     }
+    save_candidates(&repo_root, &key, &candidates, pick)
+}
+
+fn save_candidates(repo_root: &Path, key: &str, candidates: &[PathBuf], confirm: bool) -> anyhow::Result<()> {
+    let mut saved = 0;
+    for rel_path in candidates {
+        let rel_dir = rel_path.parent().unwrap_or(Path::new(""));
+        let display = rel_display(rel_dir);
+
+        if confirm {
+            print!("  save {display}/CLAUDE.md? [y/N] ");
+            io::stdout().flush()?;
+            let mut input = String::new();
+            io::stdin().read_line(&mut input)?;
+            if !input.trim().eq_ignore_ascii_case("y") {
+                continue;
+            }
+        }
+
+        symlink_into_store(&repo_root.join(rel_path), rel_dir, key)?;
+        saved += 1;
+    }
+    if saved == 0 {
+        println!("Nothing saved.");
+    }
+    Ok(())
 }
 
 fn save_standalone(path: PathBuf) -> anyhow::Result<()> {
@@ -62,49 +88,6 @@ pub fn path_to_store_key(path: &Path) -> String {
     path.to_string_lossy()
         .trim_start_matches('/')
         .replace('/', "_")
-}
-
-fn run_pick(repo_root: &Path, key: &str) -> anyhow::Result<()> {
-    let candidates = git::find_claude_mds(repo_root)?;
-
-    if candidates.is_empty() {
-        println!("No unmanaged CLAUDE.md files found in repo.");
-        return Ok(());
-    }
-
-    let mut saved = 0;
-    for rel_path in candidates {
-        let rel_dir = rel_path.parent().unwrap_or(Path::new(""));
-        let display = rel_display(rel_dir);
-        print!("  save {display}/CLAUDE.md? [y/N] ");
-        io::stdout().flush()?;
-
-        let mut input = String::new();
-        io::stdin().read_line(&mut input)?;
-        if input.trim().eq_ignore_ascii_case("y") {
-            symlink_into_store(&repo_root.join(&rel_path), rel_dir, key)?;
-            saved += 1;
-        }
-    }
-
-    if saved == 0 {
-        println!("Nothing saved.");
-    }
-    Ok(())
-}
-
-fn save_one(cwd: &Path, repo_root: &Path, key: &str) -> anyhow::Result<()> {
-    let claude_md = cwd.join("CLAUDE.md");
-    if !claude_md.exists() {
-        anyhow::bail!("no CLAUDE.md found in {}", cwd.display());
-    }
-    if claude_md.is_symlink() {
-        anyhow::bail!("CLAUDE.md is already a symlink — already managed by apm");
-    }
-
-    let rel = cwd.strip_prefix(repo_root).unwrap_or(Path::new(""));
-    symlink_into_store(&claude_md, rel, key)?;
-    Ok(())
 }
 
 fn symlink_into_store(claude_md: &Path, rel: &Path, key: &str) -> anyhow::Result<()> {
