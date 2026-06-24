@@ -1,4 +1,5 @@
 use anyhow::Context;
+use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -12,6 +13,14 @@ pub struct Lockfile {
 pub struct LockEntry {
     pub commit: String,
     pub updated_at: String,
+}
+
+pub fn now_unix_secs() -> String {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs()
+        .to_string()
 }
 
 impl Lockfile {

@@ -1,10 +1,9 @@
 use crate::{
     config::{Agent, Packages, SkillEntry},
     git,
-    lockfile::{LockEntry, Lockfile},
+    lockfile::{now_unix_secs, LockEntry, Lockfile},
     package::{skill::Skill, Package},
 };
-use chrono::Utc;
 
 pub fn run(source: String, ref_: String, name_override: Option<String>) -> anyhow::Result<()> {
     let (source_canonical, derived_name) = git::resolve_source(&source)?;
@@ -37,7 +36,7 @@ pub fn run(source: String, ref_: String, name_override: Option<String>) -> anyho
     packages.save()?;
 
     let mut lock = Lockfile::load()?;
-    lock.skills.insert(name.clone(), LockEntry { commit: commit.clone(), updated_at: Utc::now().to_rfc3339() });
+    lock.skills.insert(name.clone(), LockEntry { commit: commit.clone(), updated_at: now_unix_secs() });
     lock.save()?;
 
     println!(" done ({commit})");

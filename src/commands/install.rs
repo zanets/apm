@@ -1,10 +1,9 @@
 use crate::{
     config::{Agent, Config, Packages},
     git,
-    lockfile::{LockEntry, Lockfile},
+    lockfile::{now_unix_secs, LockEntry, Lockfile},
     package::{mcp::Mcp, skill::Skill, Package},
 };
-use chrono::Utc;
 
 pub fn run() -> anyhow::Result<()> {
     let packages = Packages::load()?;
@@ -25,7 +24,7 @@ pub fn run() -> anyhow::Result<()> {
             let commit = git::current_commit(&repo)?;
             lock.skills.insert(name.clone(), LockEntry {
                 commit: commit.clone(),
-                updated_at: Utc::now().to_rfc3339(),
+                updated_at: now_unix_secs(),
             });
             println!(" done ({commit})");
         }
