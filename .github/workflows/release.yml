@@ -116,7 +116,7 @@ jobs:
       - name: Checkout tap repo
         uses: actions/checkout@v4
         with:
-          repository: zanets/homebrew-apm
+          repository: zanets/homebrew-tap
           ssh-key: ${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}
 
       - name: Download checksums

@@ -7,8 +7,8 @@ A package manager for [Claude Code](https://claude.ai/code) — install and mana
 **Homebrew (recommended)**
 
 ```bash
-brew tap zanets/apm
-brew trust --tap zanets/apm
+brew tap zanets/tap
+brew trust --tap zanets/tap
 brew install apm
 ```
 

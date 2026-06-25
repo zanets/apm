@@ -7,8 +7,8 @@
 **Homebrew（建議）**
 
 ```bash
-brew tap zanets/apm
-brew trust --tap zanets/apm
+brew tap zanets/tap
+brew trust --tap zanets/tap
 brew install apm
 ```
 
