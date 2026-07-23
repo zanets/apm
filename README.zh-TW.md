@@ -75,6 +75,18 @@ apm list -u
 apm remove ~/CLAUDE.md
 ```
 
+**使用情境：跨機器同步 store**
+
+store 本身可以用 git 追蹤，讓同一份 CLAUDE.md 檔案跟著你到其他機器：
+
+```bash
+apm store init            # git init store（idempotent）
+apm store sync            # add -A、commit、pull --rebase、push
+apm store sync -m "msg"   # 自訂 commit 訊息
+```
+
+`sync` 會先 stage 並 commit 本機變更，接著在 push 前跑 `git pull --rebase`，把其他機器上的變更先拉下來。如果 rebase 遇到衝突，會直接中止並停在 rebase 進行中的狀態讓你手動解決（`cd` 進 store、修檔案、`git add <file>`、`git rebase --continue`），解決完再重跑 `apm store sync`。如果還沒設定 remote，`sync` 只會在本機 commit，並跳過 pull/push。
+
 ## 設計重點
 
 **遵循 XDG Base Directory 規範。** 資料存放於 `$XDG_DATA_HOME/apm`（預設 `~/.local/share/apm`），尊重環境變數，非標準 home 配置也能正常運作。
@@ -86,6 +98,8 @@ apm remove ~/CLAUDE.md
 **用 `git ls-files` 做搜尋。** 掃描未納管的 CLAUDE.md（`apm save -p`、`apm list -u`）委派給 `git ls-files`，而非遞迴走訪檔案系統。在大型 repo 中速度更快，且自動尊重 `.gitignore`。
 
 **路徑為 key 的獨立項目。** `save -f` 接受任意絕對路徑的 CLAUDE.md，以該路徑作為 store 的 key，而非 git remote。這讓 apm 能管理 repo 以外的檔案 — 最典型的就是 `~/CLAUDE.md`，即 Claude Code 的全域指令檔。
+
+**Store sync 只是薄薄一層 git 包裝。** `apm store sync` 就是對 claudemds store 執行 `git add -A` + commit + `git pull --rebase` + push，沒有自訂的合併邏輯。衝突會如實呈現為 git conflict 讓你自己解決，apm 不會嘗試自動合併。
 
 ## 檔案說明
 

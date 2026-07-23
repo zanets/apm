@@ -1,4 +1,4 @@
-use anyhow::Context;
+use anyhow::{bail, Context};
 use std::path::Path;
 use std::process::Command;
 
@@ -72,6 +72,123 @@ pub fn remote_url_to_key(url: &str) -> String {
         url.to_string()
     };
     normalized.replace('/', "_")
+}
+
+fn require_repo(dir: &Path) -> anyhow::Result<()> {
+    if !dir.join(".git").exists() {
+        bail!("{} is not a git repository — run `apm store init` first", dir.display());
+    }
+    Ok(())
+}
+
+/// `git init` the given directory (idempotent — no-op if already a repo).
+pub fn init_repo(dir: &Path) -> anyhow::Result<()> {
+    if dir.join(".git").exists() {
+        println!("  already a git repository: {}", dir.display());
+        return Ok(());
+    }
+    std::fs::create_dir_all(dir)?;
+    let status = Command::new("git")
+        .arg("init")
+        .current_dir(dir)
+        .status()
+        .context("git not found")?;
+    if !status.success() {
+        bail!("git init failed in {}", dir.display());
+    }
+    println!("  initialized git repository in {}", dir.display());
+    Ok(())
+}
+
+/// `git add -A` in the given directory.
+pub fn add_all(dir: &Path) -> anyhow::Result<()> {
+    require_repo(dir)?;
+    let status = Command::new("git")
+        .args(["add", "-A"])
+        .current_dir(dir)
+        .status()
+        .context("git not found")?;
+    if !status.success() {
+        bail!("git add failed in {}", dir.display());
+    }
+    Ok(())
+}
+
+/// Whether there are staged changes ready to commit in the given directory.
+pub fn has_staged_changes(dir: &Path) -> anyhow::Result<bool> {
+    require_repo(dir)?;
+    let status = Command::new("git")
+        .args(["diff", "--cached", "--quiet"])
+        .current_dir(dir)
+        .status()
+        .context("git not found")?;
+    Ok(!status.success())
+}
+
+/// `git commit -m <message>` in the given directory.
+pub fn commit(dir: &Path, message: &str) -> anyhow::Result<()> {
+    require_repo(dir)?;
+    let status = Command::new("git")
+        .args(["commit", "-m", message])
+        .current_dir(dir)
+        .status()
+        .context("git not found")?;
+    if !status.success() {
+        bail!("git commit failed in {}", dir.display());
+    }
+    Ok(())
+}
+
+/// `git pull --rebase` in the given directory. On conflict, aborts and leaves the
+/// repo mid-rebase for manual resolution rather than attempting to merge.
+pub fn pull(dir: &Path) -> anyhow::Result<()> {
+    require_repo(dir)?;
+    let status = Command::new("git")
+        .args(["pull", "--rebase"])
+        .current_dir(dir)
+        .status()
+        .context("git not found")?;
+    if !status.success() {
+        bail!(
+            "git pull --rebase failed in {} — resolve the conflict (cd in, fix the file, `git add <file>`, `git rebase --continue`), then re-run `apm store sync`",
+            dir.display()
+        );
+    }
+    Ok(())
+}
+
+/// `git push` in the given directory. Sets upstream (`-u origin <branch>`) on the first push.
+pub fn push(dir: &Path) -> anyhow::Result<()> {
+    require_repo(dir)?;
+
+    let has_upstream = Command::new("git")
+        .args(["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"])
+        .current_dir(dir)
+        .output()
+        .context("git not found")?
+        .status
+        .success();
+
+    let status = if has_upstream {
+        Command::new("git").arg("push").current_dir(dir).status()
+    } else {
+        let out = Command::new("git")
+            .args(["rev-parse", "--abbrev-ref", "HEAD"])
+            .current_dir(dir)
+            .output()
+            .context("git not found")?;
+        let branch = String::from_utf8(out.stdout)?.trim().to_string();
+        Command::new("git")
+            .args(["push", "-u", "origin", &branch])
+            .current_dir(dir)
+            .status()
+    }
+    .context("git not found")?;
+
+    if !status.success() {
+        bail!("git push failed in {}", dir.display());
+    }
+    Ok(())
 }
 
 #[cfg(test)]

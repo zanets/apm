@@ -75,6 +75,18 @@ apm list -u
 apm remove ~/CLAUDE.md
 ```
 
+**Use case: syncing the store across machines**
+
+The store itself can be tracked as a git repo, so the same CLAUDE.md files follow you to other machines:
+
+```bash
+apm store init            # git init the store (idempotent)
+apm store sync            # add -A, commit, pull --rebase, push
+apm store sync -m "msg"   # use a custom commit message
+```
+
+`sync` stages and commits any local changes, then runs `git pull --rebase` before pushing so changes made on other machines are picked up first. If the rebase hits a conflict, it stops and leaves the repo mid-rebase for you to resolve manually (`cd` into the store, fix the file, `git add <file>`, `git rebase --continue`), then re-run `apm store sync`. If no remote is configured yet, `sync` commits locally and skips the pull/push step.
+
 ## Design
 
 **XDG Base Directory compliance.** Data lives in `$XDG_DATA_HOME/apm` (`~/.local/share/apm`), respecting the environment variable so it works with non-standard home layouts.
@@ -86,6 +98,8 @@ apm remove ~/CLAUDE.md
 **`git ls-files` for discovery.** Scanning for unmanaged CLAUDE.md files (`apm save -p`, `apm list -u`) delegates to `git ls-files` rather than walking the filesystem. This keeps discovery fast in large repos and respects `.gitignore` for free.
 
 **Standalone path-keyed entries.** `save -f` accepts any CLAUDE.md by absolute path, keying the store entry on that path rather than a git remote. This lets apm manage files that live outside any repo — most usefully `~/CLAUDE.md`, Claude Code's global instruction file.
+
+**Store sync is a thin git wrapper.** `apm store sync` is `git add -A` + commit + `git pull --rebase` + push against the claudemds store — no custom merge logic. Conflicts surface as real git conflicts for you to resolve, not something apm tries to auto-merge.
 
 ## Files
 

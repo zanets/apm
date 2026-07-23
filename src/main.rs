@@ -3,6 +3,7 @@ mod config;
 mod git;
 
 use clap::{Parser, Subcommand};
+use commands::store::StoreCommands;
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -40,6 +41,11 @@ enum Commands {
     },
     /// Print apm storage paths
     Env,
+    /// Manage the claudemds store as a git repository
+    Store {
+        #[command(subcommand)]
+        command: StoreCommands,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -51,5 +57,6 @@ fn main() -> anyhow::Result<()> {
         Commands::List { unmanaged } => commands::claudemd::list::run(unmanaged),
         Commands::Remove { key } => commands::claudemd::remove::run(key),
         Commands::Env => commands::env::run(),
+        Commands::Store { command } => commands::store::run(command),
     }
 }
