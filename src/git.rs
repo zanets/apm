@@ -11,6 +11,7 @@ pub fn find_claude_mds(repo_root: &Path) -> anyhow::Result<Vec<std::path::PathBu
     for args in [
         vec!["ls-files"],
         vec!["ls-files", "--others", "--exclude-standard"],
+        vec!["ls-files", "--others", "--ignored", "--exclude-standard"],
     ] {
         let out = Command::new("git")
             .args(&args)
