@@ -16,7 +16,7 @@ pub fn run(unmanaged: bool) -> anyhow::Result<()> {
 fn run_stored() -> anyhow::Result<()> {
     let base = claudemds_dir();
     if !base.exists() {
-        println!("No saved CLAUDE.md files. Save one with: apm md save");
+        println!("No saved CLAUDE.md files. Save one with: apm save");
         return Ok(());
     }
 
@@ -32,7 +32,7 @@ fn run_stored() -> anyhow::Result<()> {
     let has_standalone = standalone_dir.is_dir();
 
     if repos.is_empty() && !has_standalone {
-        println!("No saved CLAUDE.md files. Save one with: apm md save");
+        println!("No saved CLAUDE.md files. Save one with: apm save");
         return Ok(());
     }
 

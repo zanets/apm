@@ -13,7 +13,7 @@ pub fn run() -> anyhow::Result<()> {
                 restore_repo(&store_dir, &repo_root)?;
                 any = true;
             } else {
-                eprintln!("  no saved CLAUDE.md for '{key}' (run `apm md save` first)");
+                eprintln!("  no saved CLAUDE.md for '{key}' (run `apm save` first)");
             }
         }
         Err(_) => {}

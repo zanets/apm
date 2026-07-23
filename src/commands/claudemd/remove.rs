@@ -12,7 +12,7 @@ pub fn run(key: String) -> anyhow::Result<()> {
         let encoded = super::save::path_to_store_key(file_path);
         let store_dir = claudemds_dir().join("file").join(&encoded);
         if !store_dir.exists() {
-            anyhow::bail!("'{key}' not found — run `apm claudemd list` to see saved entries");
+            anyhow::bail!("'{key}' not found — run `apm list` to see saved entries");
         }
         if file_path.is_symlink() {
             let _ = std::fs::remove_file(file_path);
@@ -25,7 +25,7 @@ pub fn run(key: String) -> anyhow::Result<()> {
     // Git-backed entry
     let store_dir = claudemds_dir().join(&key);
     if !store_dir.exists() {
-        anyhow::bail!("'{key}' not found — run `apm claudemd list` to see saved entries");
+        anyhow::bail!("'{key}' not found — run `apm list` to see saved entries");
     }
 
     let cwd = env::current_dir()?;

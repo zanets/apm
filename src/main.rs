@@ -1,15 +1,12 @@
 mod commands;
 mod config;
 mod git;
-mod lockfile;
-mod package;
 
 use clap::{Parser, Subcommand};
-use commands::claudemd::ClaudemdCommands;
-use commands::mcp::McpCommands;
+use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "apm", about = "Agent package manager")]
+#[command(name = "apm", about = "Manage project CLAUDE.md files (local-only, keyed by git remote)")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -17,74 +14,42 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Add a package and download it into local store (~/.apm/store/)
-    Add {
-        /// GitHub source: user/repo or github:user/repo
-        source: String,
-        /// Branch or tag to track
-        #[arg(long, default_value = "main")]
-        ref_: String,
-        /// Override the package name (default: repo name)
-        #[arg(long)]
-        name: Option<String>,
+    /// Create a new CLAUDE.md in the current directory and store it immediately
+    New,
+    /// Save the current project's CLAUDE.md to apm store (keyed by git remote)
+    Save {
+        /// Scan repo and confirm each CLAUDE.md interactively before saving
+        #[arg(short = 'p', long)]
+        pick: bool,
+        /// Save a standalone CLAUDE.md by absolute path (key = absolute path, no git needed)
+        #[arg(short = 'f', long, value_name = "PATH")]
+        file: Option<PathBuf>,
     },
-    /// Link packages into agent directories (make active)
-    Enable {
-        /// Enable only this package (omit to enable all)
-        name: Option<String>,
-        /// Target agent (default: from ~/.apm/config.toml)
-        #[arg(long, value_enum)]
-        agent: Option<config::Agent>,
+    /// Restore CLAUDE.md for the current project from apm store
+    Restore,
+    /// List all saved project CLAUDE.md files
+    List {
+        /// List unmanaged CLAUDE.md files in the current repo instead
+        #[arg(short = 'u', long)]
+        unmanaged: bool,
     },
-    /// Remove symlink from agent, keep store intact (make inactive)
-    Disable {
-        /// Disable only this package (omit to disable all)
-        name: Option<String>,
-        /// Target agent (default: from ~/.apm/config.toml)
-        #[arg(long, value_enum)]
-        agent: Option<config::Agent>,
-    },
-    /// Remove from store and packages.toml (disables first)
+    /// Remove a saved CLAUDE.md from the store
     Remove {
-        /// Package name to remove
-        name: String,
+        /// Key shown in `apm list`
+        key: String,
     },
-    /// Update packages to latest commit (symlinks update automatically)
-    Update {
-        /// Update only this package (omit to update all)
-        name: Option<String>,
-    },
-    /// List packages and their status
-    List,
-    /// Install all packages declared in packages.toml
-    Install,
     /// Print apm storage paths
     Env,
-    /// Manage MCP servers
-    Mcp {
-        #[command(subcommand)]
-        command: McpCommands,
-    },
-    /// Manage project CLAUDE.md files (local-only, keyed by git remote)
-    #[command(name = "md")]
-    Claudemd {
-        #[command(subcommand)]
-        command: ClaudemdCommands,
-    },
 }
 
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        Commands::Add { source, ref_, name } => commands::skill::add::run(source, ref_, name),
-        Commands::Enable { name, agent } => commands::skill::enable::run(name, agent),
-        Commands::Disable { name, agent } => commands::skill::disable::run(name, agent),
-        Commands::Remove { name } => commands::skill::remove::run(name),
-        Commands::Update { name } => commands::skill::update::run(name),
-        Commands::List => commands::skill::list::run(),
-        Commands::Install => commands::install::run(),
+        Commands::New => commands::claudemd::new::run(),
+        Commands::Save { pick, file } => commands::claudemd::save::run(pick, file),
+        Commands::Restore => commands::claudemd::restore::run(),
+        Commands::List { unmanaged } => commands::claudemd::list::run(unmanaged),
+        Commands::Remove { key } => commands::claudemd::remove::run(key),
         Commands::Env => commands::env::run(),
-        Commands::Mcp { command } => commands::mcp::run(command),
-        Commands::Claudemd { command } => commands::claudemd::run(command),
     }
 }

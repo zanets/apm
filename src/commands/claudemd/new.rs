@@ -7,7 +7,7 @@ pub fn run() -> anyhow::Result<()> {
     let claude_md = cwd.join("CLAUDE.md");
     if claude_md.exists() {
         anyhow::bail!(
-            "CLAUDE.md already exists — use `apm md save` to store an existing file"
+            "CLAUDE.md already exists — use `apm save` to store an existing file"
         );
     }
 
