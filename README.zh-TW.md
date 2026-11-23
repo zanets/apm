@@ -61,3 +61,15 @@ apm store sync -m "更新專案指令"
 ```
 
 沒有 `origin` 時只會在本機 commit。發生 rebase 衝突時，進入 `apm env` 顯示的 store 路徑處理，完成 rebase 後再執行 `apm store sync`。
+
+## 在 Codex 自動同步
+
+在 macOS 或 Linux 的 apm checkout 執行下列指令。需要 Python 3、Rust、Git，以及對 store 的 Git 讀寫權限。
+
+```sh
+python3 scripts/install-codex-hooks.py --store-url git@github.com:zanets/claudemds.git
+```
+
+安裝程式會建置 apm、在需要時 clone store，並根據本機路徑加入兩個 hooks，保留既有 hooks。請重新開啟 Codex，用 `/hooks` 審查並信任新設定。
+
+啟動時會執行 `apm store project pull`，並將已納管的指令提供給本次工作階段。回合結束時，`apm store project push` 只會提交目前 repo 已連入且有修改的指令。Git 已追蹤的專案檔案、獨立項目和其他 store 檔案不會進入這些自動提交。同步使用 fast-forward，遇到歷史分岔或推送錯誤會回報。

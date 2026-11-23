@@ -63,3 +63,15 @@ apm store sync -m "Update project instructions"
 ```
 
 Without an `origin` remote, sync commits locally. If a rebase conflicts, resolve it in the path shown by `apm env`, finish the rebase, and rerun `apm store sync`.
+
+## Automatic sync in Codex
+
+From an apm checkout on macOS or Linux, run the installer with Python 3, Rust, and access to your Git store:
+
+```sh
+python3 scripts/install-codex-hooks.py --store-url git@github.com:zanets/claudemds.git
+```
+
+The installer builds apm, clones the store if needed, and adds two hooks with paths for the current machine. It preserves existing hooks. Reopen Codex, then review and trust the hooks with `/hooks`.
+
+The start hook runs `apm store project pull` and passes managed instructions to the current session. The stop hook runs `apm store project push` for modified instructions linked into the current repository. Git-tracked repository files, standalone items, and unrelated store files stay outside these automatic commits. Automatic sync fast-forwards the store and reports divergence or push errors for review.

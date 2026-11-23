@@ -13,11 +13,11 @@ use std::{
     path::{Component, Path, PathBuf},
 };
 
-const CODEX: &str = "AGENTS.md";
-const OVERRIDE: &str = "AGENTS.override.md";
+pub(super) const CODEX: &str = "AGENTS.md";
+pub(super) const OVERRIDE: &str = "AGENTS.override.md";
 const LEGACY: &str = "CLAUDE.md";
 
-fn is_codex(path: &Path) -> bool {
+pub(super) fn is_codex(path: &Path) -> bool {
     matches!(
         path.file_name().and_then(OsStr::to_str),
         Some(CODEX | OVERRIDE)
@@ -28,7 +28,7 @@ fn is_instruction(path: &Path) -> bool {
     is_codex(path) || path.file_name() == Some(OsStr::new(LEGACY))
 }
 
-fn repo() -> anyhow::Result<(PathBuf, String)> {
+pub(super) fn repo() -> anyhow::Result<(PathBuf, String)> {
     let cwd = std::env::current_dir()?;
     let root = crate::git::repo_root(&cwd)?;
     let key = crate::git::remote_url_to_key(&crate::git::remote_url(&root)?);
@@ -47,7 +47,7 @@ fn validate_key(key: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn exists(path: &Path) -> io::Result<bool> {
+pub(super) fn exists(path: &Path) -> io::Result<bool> {
     match fs::symlink_metadata(path) {
         Ok(_) => Ok(true),
         Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(false),
@@ -59,7 +59,7 @@ fn is_file(path: &Path) -> bool {
     fs::symlink_metadata(path).is_ok_and(|meta| meta.is_file())
 }
 
-fn project_destination(root: &Path, relative: &Path) -> anyhow::Result<PathBuf> {
+pub(super) fn project_destination(root: &Path, relative: &Path) -> anyhow::Result<PathBuf> {
     let mut parent = root.to_path_buf();
     for component in relative.parent().unwrap().components() {
         parent.push(component);
@@ -83,7 +83,7 @@ fn unmanaged(root: &Path) -> anyhow::Result<Vec<PathBuf>> {
     Ok(paths)
 }
 
-fn stored_files(dir: &Path) -> anyhow::Result<Vec<PathBuf>> {
+pub(super) fn stored_files(dir: &Path) -> anyhow::Result<Vec<PathBuf>> {
     fn collect(dir: &Path, files: &mut Vec<PathBuf>) -> anyhow::Result<()> {
         for entry in fs::read_dir(dir)? {
             let entry = entry?;
@@ -152,7 +152,7 @@ fn standalone_entries() -> anyhow::Result<Vec<StandaloneEntry>> {
     Ok(entries)
 }
 
-fn link(source: &Path, dest: &Path) -> io::Result<()> {
+pub(super) fn link(source: &Path, dest: &Path) -> io::Result<()> {
     #[cfg(unix)]
     use std::os::unix::fs::symlink;
     #[cfg(windows)]
