@@ -5,9 +5,9 @@ use clap::Subcommand;
 
 #[derive(Subcommand)]
 pub enum StoreCommands {
-    /// Initialize the claudemds store as a git repository (idempotent)
+    /// Initialize the instruction store as a git repository (idempotent)
     Init,
-    /// Stage, commit, pull (rebase), and push all changes in the claudemds store
+    /// Stage, commit, pull (rebase), and push all changes in the instruction store
     Sync {
         /// Commit message (default: "apm: sync <timestamp>")
         #[arg(short = 'm', long)]

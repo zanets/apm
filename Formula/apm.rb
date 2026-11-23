@@ -1,5 +1,5 @@
 class Apm < Formula
-  desc "Agent package manager for Claude Code"
+  desc "Local instruction file manager for Codex"
   homepage "https://github.com/zanets/apm"
   version "0.1.0"
   license "MIT"

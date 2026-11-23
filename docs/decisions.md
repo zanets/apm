@@ -1,4 +1,6 @@
-# Design Decisions
+# Original Package Manager Design Decisions
+
+These notes describe the earlier package-manager design. See [Architecture](architecture.md) for the current instruction-file CLI.
 
 ## Store + Symlink (Homebrew pattern)
 

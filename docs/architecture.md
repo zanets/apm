@@ -1,79 +1,21 @@
 # Architecture
 
-## Overview
+apm keeps local Codex instructions in a central store and links them back to their original locations. Changes made through a link edit the stored file directly.
 
-`apm` is a CLI package manager for Claude Code packages (skills, tools, MCP servers). It uses a **store + symlink** architecture: packages are cloned once into a central store, then symlinked into agent directories.
+- `src/main.rs` defines the CLI.
+- `src/commands/instructions/` handles discovery, storage, linking, and migration.
+- `src/config.rs` resolves XDG paths.
+- `src/git.rs` wraps Git for discovery, remote keys, and sync.
+- `src/commands/store/` initializes and syncs the store's Git repository.
 
-## Directory Layout
+## Store layout
 
-```
-~/.config/apm/                                        # $XDG_CONFIG_HOME/apm
-├── packages.toml                                     # declared packages (source of truth)
-├── packages.lock                                     # pinned commits + timestamps
-└── config.toml                                       # default agent, etc.
+The directory remains `${XDG_DATA_HOME:-$HOME/.local/share}/apm/claudemds/` so upgrades retain the store's Git history and existing links. Repository entries use the normalized `origin` key and keep the file's repository-relative path. Standalone entries normally use `file/<encoded-path>/` with a `.path` containing the original absolute path. Global Codex instructions use `file/.codex-home/<filename>/`. These entries resolve their destination against the active Codex home at restore time.
 
-~/.local/share/apm/store/skills/<name>/               # $XDG_DATA_HOME/apm
+The project scan uses Git's untracked-file list, including ignored files, to find regular `AGENTS.md` and `AGENTS.override.md` files. Saving copies a file into the store without overwriting an existing entry. It stages the symlink on the working tree filesystem and renames it into place. This also works when the store is on another filesystem.
 
-~/.claude/skills/
-└── <name> -> ~/.local/share/apm/store/skills/<name>  # symlink
-```
+Restore recreates links for Codex and legacy files at their saved locations. It skips tracked paths and existing destinations. Project migration copies selected `CLAUDE.md` files to sibling `AGENTS.md` paths after checking for conflicts in the working tree and store.
 
-## Module Map
+## Design history
 
-```
-src/
-├── main.rs             # CLI entry: Commands enum, dispatch
-├── config.rs           # Packages / SkillEntry / ToolEntry, path helpers
-├── lockfile.rs         # Lockfile / LockEntry, load/save
-├── git.rs              # parse_source(), clone(), pull(), current_commit()
-├── package/
-│   ├── mod.rs          # Package trait
-│   ├── skill.rs        # Skill implements Package
-│   └── tool.rs         # Tool implements Package
-└── commands/
-    ├── mod.rs
-    ├── skill/          # add, install, uninstall, remove, update, list
-    └── tool/           # add, install, uninstall, remove, update, list
-```
-
-## Data Flow
-
-### `apm skill add user/repo`
-
-1. `parse_source()` → `github:user/repo` + derived name
-2. Conflict check against `packages.toml`
-3. `git clone --depth=1` into `~/.apm/store/skills/<name>`
-4. Write `packages.toml` + `packages.lock` (only on success)
-
-### `apm skill install`
-
-1. Read `packages.toml`
-2. For each skill: `symlink(store_path, link_dir)`
-3. `link_dir` is determined by `Agent` variant (currently only `Claude`)
-
-### `apm skill update`
-
-1. `git pull --ff-only` in store dir
-2. Update commit hash in `packages.lock`
-3. Symlinks point at the directory, so they pick up the new commit automatically
-
-## Package Trait
-
-```rust
-pub trait Package {
-    fn store_path(&self, name: &str) -> PathBuf;
-    fn install(&self, name: &str) -> anyhow::Result<()>;
-    fn is_installed(&self, name: &str) -> bool;
-    fn uninstall(&self, name: &str) -> anyhow::Result<()>;
-}
-```
-
-`Skill` and `Tool` both implement this. The command layer is identical between the two; only `store_path()` and `link_dir()` differ.
-
-## Adding a New Package Type (e.g. MCP)
-
-1. Add `McpEntry` to `config.rs`, add `mcps` field to `Packages`
-2. Add `mcps` field to `Lockfile`
-3. Create `src/package/mcp.rs` implementing `Package`
-4. Mirror `src/commands/tool/` → `src/commands/mcp/`
-5. Add `Mcp` variant to `Commands` in `main.rs`
+[Earlier planning notes](decisions.md) describe the original package-manager design.

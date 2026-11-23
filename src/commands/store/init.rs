@@ -1,5 +1,5 @@
-use crate::{config::claudemds_dir, git};
+use crate::{config::store_dir, git};
 
 pub fn run() -> anyhow::Result<()> {
-    git::init_repo(&claudemds_dir())
+    git::init_repo(&store_dir())
 }

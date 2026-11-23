@@ -1,8 +1,8 @@
-use crate::{config::claudemds_dir, git};
+use crate::{config::store_dir, git};
 use std::process::Command;
 
 pub fn run(message: Option<String>) -> anyhow::Result<()> {
-    let dir = claudemds_dir();
+    let dir = store_dir();
     git::add_all(&dir)?;
 
     if git::has_staged_changes(&dir)? {
@@ -27,7 +27,9 @@ pub fn run(message: Option<String>) -> anyhow::Result<()> {
 }
 
 fn default_message() -> String {
-    let out = Command::new("date").arg("+apm: sync %Y-%m-%d %H:%M").output();
+    let out = Command::new("date")
+        .arg("+apm: sync %Y-%m-%d %H:%M")
+        .output();
     match out {
         Ok(o) if o.status.success() => String::from_utf8_lossy(&o.stdout).trim().to_string(),
         _ => "apm: sync".to_string(),

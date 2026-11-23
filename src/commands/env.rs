@@ -6,6 +6,6 @@ pub fn run() -> anyhow::Result<()> {
 
     println!("config    {}", config_dir.display());
     println!("data      {}", data_dir.display());
-    println!("claudemds {}", config::claudemds_dir().display());
+    println!("store     {}", config::store_dir().display());
     Ok(())
 }
